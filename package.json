@@ -1,0 +1,23 @@
+{
+  "name": "qq-pet-mengka-plugin",
+  "version": "1.0.0",
+  "description": "QQ宠物接口助手 · 萌卡NT插件版（宝箱/喂食/洗澡/学习/打工/冒险/PK/好友照顾 + 自动托管 + WebUI）",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "qq-pet-mengka": "index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "start:forward": "node index.js --mode forward --ws-url ws://127.0.0.1:3001 --token YOUR_TOKEN",
+    "start:reverse": "node index.js --mode reverse --port 3002 --token YOUR_TOKEN",
+    "check": "node --check index.js && node --check lib/pet.js && node --check lib/runtime.js && node --check lib/store.js && node --check lib/commands.js && node --check lib/scheduler.js && node --check lib/webui.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "license": "GPL-3.0-only"
+}

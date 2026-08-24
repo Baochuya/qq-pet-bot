@@ -1,0 +1,44 @@
+{
+  "command_prefix": "!",
+  "command_keywords": ["宠物", "pet", "qpet", "qq宠物"],
+  "self_ids": [],
+  "allowed_groups": [],
+  "allowed_users": [],
+  "check_interval": 60,
+  "auto_manage": false,
+  "manage": {
+    "auto_feed": true,
+    "auto_bath": true,
+    "auto_replenish": true,
+    "auto_activity": false,
+    "feed_item": "饼干",
+    "bath_item": "香皂片",
+    "comfort_threshold": 80,
+    "gold_safe_line": 50,
+    "activity_priority": "learn"
+  },
+  "pk": {
+    "enabled": false,
+    "time": "21:00",
+    "batch": 5,
+    "friend_id": ""
+  },
+  "friend_care": {
+    "enabled": false,
+    "friends": [],
+    "interval": 3600,
+    "threshold": 80
+  },
+  "notify": {
+    "group_ids": [],
+    "send_result": false
+  },
+  "web": {
+    "host": "127.0.0.1",
+    "port": 8090,
+    "token": "",
+    "basePath": "",
+    "authHeader": "X-Mengka-Admin-Token"
+  },
+  "data_dir": ""
+}

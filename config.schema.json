@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "title": "QQ宠物 · 萌卡NT插件配置",
+  "description": "QQ宠物接口助手萌卡NT插件的运行配置。可通过 --config 参数指定，未被指定时在插件根目录查找 config.json。",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "command_prefix": {
+      "type": "string",
+      "default": "!",
+      "description": "群聊/私聊命令前缀，例如『!宠物 状态』"
+    },
+    "command_keywords": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": ["宠物", "pet"],
+      "description": "命令主关键词（不含前缀）"
+    },
+    "self_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "允许托管/操作的 Bot QQ。留空表示当前节点下的所有 Bot 都可用"
+    },
+    "allowed_groups": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "允许执行命令的群号白名单，留空表示全部群可用"
+    },
+    "allowed_users": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "允许执行命令的 QQ 白名单，留空表示所有人可用"
+    },
+    "check_interval": {
+      "type": "integer",
+      "minimum": 10,
+      "default": 60,
+      "description": "自动托管轮询间隔（秒）"
+    },
+    "auto_manage": {
+      "type": "boolean",
+      "default": false,
+      "description": "开机自动开启自动托管"
+    },
+    "manage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "auto_feed":       { "type": "boolean", "default": true, "description": "自动喂食" },
+        "auto_bath":       { "type": "boolean", "default": true, "description": "自动洗澡" },
+        "auto_replenish":  { "type": "boolean", "default": true, "description": "库存不足时自动补货" },
+        "auto_activity":   { "type": "boolean", "default": false, "description": "空闲时自动学习/打工/冒险" },
+        "feed_item":       { "type": "string", "default": "饼干", "description": "喂食用品（饼干/虾仁，或目录中的名称/ID）" },
+        "bath_item":       { "type": "string", "default": "香皂片", "description": "洗护用品（香皂片/沐浴球，或目录中的名称/ID）" },
+        "comfort_threshold": { "type": "integer", "default": 80, "minimum": 0, "maximum": 100, "description": "体力/清洁低于该值时执行照顾" },
+        "gold_safe_line": { "type": "integer", "default": 50, "minimum": 0, "description": "预留金币安全线（低于则不自动购买）" },
+        "activity_priority": { "type": "string", "enum": ["learn", "work", "adventure"], "default": "learn", "description": "空闲时的活动优先级" }
+      }
+    },
+    "pk": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled":     { "type": "boolean", "default": false, "description": "启用每日定时 PK" },
+        "time":        { "type": "string", "default": "21:00", "description": "每日 PK 触发时间（HH:mm）" },
+        "batch":       { "type": "integer", "default": 5, "minimum": 1, "maximum": 99, "description": "每日 PK 场数" },
+        "friend_id":   { "type": "string", "default": "", "description": "固定 PK 对手 QQ；留空自动从好友宠物池选择" }
+      }
+    },
+    "friend_care": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled":    { "type": "boolean", "default": false, "description": "启用好友自动照顾" },
+        "friends":    { "type": "array", "items": { "type": "string" }, "default": [], "description": "被照顾的好友 QQ 白名单，留空表示照顾全部有宠物好友" },
+        "interval":   { "type": "integer", "default": 3600, "description": "好友照顾轮询间隔（秒）" },
+        "threshold":  { "type": "integer", "default": 80, "description": "好友体力/清洁阈值" }
+      }
+    },
+    "notify": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "group_ids": { "type": "array", "items": { "type": "string" }, "default": [], "description": "托管操作回执群号；留空不在群里主动上报" },
+        "send_result": { "type": "boolean", "default": false, "description": "每轮托管操作结果是否发群" }
+      }
+    },
+    "web": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "host": { "type": "string", "default": "127.0.0.1", "description": "WebUI 监听地址（框架托管时由框架注入 {{admin_host}}，此值无效）" },
+        "port": { "type": "integer", "default": 8090, "description": "WebUI 监听端口（框架托管时由框架分配 {{admin_port}}，此值无效）" },
+        "basePath": { "type": "string", "default": "", "description": "WebUI 挂载基础路径（框架托管时由框架注入 {{admin_base_path}}）" },
+        "token": { "type": "string", "default": "", "description": "WebUI 访问令牌；框架托管时从 {{admin_token_file}} 读取，此值可留空" },
+        "authHeader": { "type": "string", "default": "X-Mengka-Admin-Token", "description": "框架令牌校验请求头名" }
+      }
+    },
+    "data_dir": {
+      "type": "string",
+      "default": "",
+      "description": "进度数据目录；留空使用插件根目录下的 data/"
+    }
+  }
+}
