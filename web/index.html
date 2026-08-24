@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>QQ宠物助手 · 萌卡NT插件</title>
+<style>
+  :root { --bg:#0f1420; --card:#171e2e; --card2:#1e2840; --line:#2a3554; --tx:#dbe3f5; --mut:#8b97b5; --acc:#4f8cff; --ok:#3ddc84; --warn:#ffb648; --bad:#ff5c5c; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Microsoft YaHei",system-ui,sans-serif; background:var(--bg); color:var(--tx); font-size:14px; }
+  .wrap { max-width:1080px; margin:0 auto; padding:16px; }
+  h1 { font-size:20px; margin:0 0 4px; display:flex; align-items:center; gap:10px; }
+  .sub { color:var(--mut); margin-bottom:16px; font-size:12px; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--mut); }
+  .dot.on { background:var(--ok); } .dot.off { background:var(--bad); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px; margin-bottom:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; }
+  .card h3 { margin:0 0 10px; font-size:14px; color:var(--tx); }
+  .gauge { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px; }
+  .gauge .g { background:var(--card2); border-radius:8px; padding:8px; text-align:center; }
+  .g .v { font-size:18px; font-weight:700; }
+  .g .k { font-size:11px; color:var(--mut); margin-top:2px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  button { background:var(--acc); color:#fff; border:0; border-radius:8px; padding:8px 14px; cursor:pointer; font-size:13px; }
+  button:hover { filter:brightness(1.1); }
+  button.ghost { background:transparent; border:1px solid var(--line); color:var(--tx); }
+  button.ok { background:var(--ok); color:#082; } button.warn { background:var(--warn); color:#3a2500; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  input,select,textarea { background:var(--card2); color:var(--tx); border:1px solid var(--line); border-radius:8px; padding:7px 9px; font-size:13px; width:100%; }
+  label { display:block; margin:8px 0 3px; font-size:12px; color:var(--mut); }
+  .flex { display:flex; gap:8px; }
+  .flex > * { flex:1; }
+  table { width:100%; border-collapse:collapse; }
+  th,td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); font-size:13px; }
+  th { color:var(--mut); font-size:12px; }
+  .msg { padding:8px 12px; border-radius:8px; margin:8px 0; font-size:13px; display:none; }
+  .msg.show { display:block; }
+  .msg.ok { background:rgba(61,220,132,.12); color:var(--ok); }
+  .msg.bad { background:rgba(255,92,92,.12); color:var(--bad); }
+  #log { background:#0a0e18; border:1px solid var(--line); border-radius:8px; height:220px; overflow:auto; padding:10px; font:12px/1.6 Consolas,monospace; white-space:pre-wrap; word-break:break-all; }
+  .muted { color:var(--mut); }
+  .tabs { display:flex; gap:6px; margin-bottom:12px; }
+  .tab { padding:6px 14px; border-radius:8px; border:1px solid var(--line); cursor:pointer; color:var(--mut); font-size:13px; }
+  .tab.active { background:var(--acc); color:#fff; border-color:var(--acc); }
+  .panel { display:none; } .panel.active { display:block; }
+  .stat { font-size:12px; color:var(--mut); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><span class="dot" id="connDot"></span> QQ宠物助手 · 萌卡NT插件 <span class="stat" id="ver"></span></h1>
+  <div class="sub" id="runinfo">正在连接…</div>
+
+  <div class="tabs">
+    <div class="tab active" data-t="overview">概览</div>
+    <div class="tab" data-t="ops">操作</div>
+    <div class="tab" data-t="config">配置</div>
+    <div class="tab" data-t="log">日志 / 统计</div>
+  </div>
+
+  <div class="msg" id="msg"></div>
+
+  <!-- 概览 -->
+  <div class="panel active" id="p-overview">
+    <div class="grid" id="bots"></div>
+  </div>
+
+  <!-- 操作 -->
+  <div class="panel" id="p-ops">
+    <div class="grid">
+      <div class="card">
+        <h3>快捷操作</h3>
+        <div class="row">
+          <button onclick="act('status')">刷新状态</button>
+          <button onclick="act('feed')">喂食</button>
+          <button onclick="act('bath')">洗澡</button>
+          <button onclick="act('buy')">补货</button>
+          <button onclick="act('settle')">结算任务</button>
+          <button onclick="act('pk_today')">每日PK</button>
+        </div>
+        <label>目标 Bot（留空=第一个）</label>
+        <input id="opSelf" placeholder="self_id" />
+      </div>
+      <div class="card">
+        <h3>自动托管</h3>
+        <div class="row">
+          <button class="ok" onclick="manage(true)">开启托管</button>
+          <button class="warn" onclick="manage(false)">关闭托管</button>
+        </div>
+        <div class="muted" style="margin-top:8px;font-size:12px;">托管开启后按配置间隔自动照顾/补货/学习/打工/冒险/每日PK。</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>宠物资讯</h3>
+      <div>命令使用：<code>!宠物 状态</code>、<code>!宠物 喂食</code>、<code>!宠物 学习</code>、<code>!宠物 pk</code> 等，<code>!宠物 帮助</code> 查看全部。</div>
+    </div>
+  </div>
+
+  <!-- 配置 -->
+  <div class="panel" id="p-config">
+    <div class="card">
+      <h3>基础配置</h3>
+      <div class="flex">
+        <div><label>命令前缀</label><input id="c_prefix" /></div>
+        <div><label>命令关键词（逗号分隔）</label><input id="c_keywords" /></div>
+      </div>
+      <div class="flex">
+        <div><label>托管轮询间隔（秒）</label><input type="number" id="c_check" /></div>
+        <div><label>固定托管 self_id（逗号分隔，留空=全部）</label><input id="c_self" /></div>
+      </div>
+      <div class="flex">
+        <div><label>允许群（逗号分隔，留空=全部）</label><input id="c_groups" /></div>
+        <div><label>允许用户（逗号分隔，留空=全部）</label><input id="c_users" /></div>
+      </div>
+      <label><input type="checkbox" id="c_automanage" /> 启动时自动开启托管</label>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h3>自动照顾 / 活动</h3>
+      <div class="flex">
+        <div><label>喂食物品</label><input id="m_feed_item" /></div>
+        <div><label>洗护用品</label><input id="m_bath_item" /></div>
+        <div><label>体力/清洁阈值</label><input type="number" id="m_threshold" /></div>
+        <div><label>金币安全线</label><input type="number" id="m_gold" /></div>
+      </div>
+      <div class="flex">
+        <div><label>活动优先级</label><select id="m_priority"><option>learn</option><option>work</option><option>adventure</option></select></div>
+      </div>
+      <label><input type="checkbox" id="m_autofeed" /> 自动喂食</label>
+      <label><input type="checkbox" id="m_autobath" /> 自动洗澡</label>
+      <label><input type="checkbox" id="m_autoreplenish" /> 自动补货</label>
+      <label><input type="checkbox" id="m_autoactivity" /> 空闲自动学习/打工/冒险</label>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h3>每日 PK / 好友照顾 / 通知</h3>
+      <div class="flex">
+        <div><label>每日PK时间</label><input id="pk_time" /></div>
+        <div><label>每日PK场数</label><input type="number" id="pk_batch" /></div>
+        <div><label>固定PK对手QQ</label><input id="pk_friend" /></div>
+      </div>
+      <label><input type="checkbox" id="pk_enabled" /> 启用每日定时PK</label>
+      <div class="flex" style="margin-top:8px">
+        <div><label>好友照顾轮询间隔（秒）</label><input type="number" id="fc_interval" /></div>
+        <div><label>好友照顾阈值</label><input type="number" id="fc_threshold" /></div>
+        <div><label>照顾好友QQ（逗号分隔，留空=全部有宠物）</label><input id="fc_friends" /></div>
+      </div>
+      <label><input type="checkbox" id="fc_enabled" /> 启用好友自动照顾</label>
+      <div class="flex" style="margin-top:8px">
+        <div><label>上报群号（逗号分隔，留空=不主动上报）</label><input id="n_groups" /></div>
+      </div>
+      <label><input type="checkbox" id="n_send" /> 每轮托管结果发群</label>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button onclick="saveCfg()">保存配置</button>
+      <button class="ghost" onclick="loadCfg()">重新载入</button>
+    </div>
+  </div>
+
+  <!-- 日志 -->
+  <div class="panel" id="p-log">
+    <div class="card">
+      <h3>运行日志</h3>
+      <div id="log"></div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h3>每日统计</h3>
+      <div id="daily"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let cfg = null, token = new URL(location.href).searchParams.get('token') || '';
+
+async function api(path, opt = {}) {
+  opt.headers = opt.headers || {};
+  if (token) opt.headers['X-Mengka-Admin-Token'] = token;
+  const r = await fetch('api/' + path, opt);
+  if (r.status === 401) throw new Error('未授权：请在 URL 后加 ?token=xxx 或使用框架内嵌访问');
+  return r.json();
+}
+function msg(text, ok = true) {
+  const m = $('#msg');
+  m.className = 'msg show ' + (ok ? 'ok' : 'bad');
+  m.textContent = text;
+  setTimeout(() => m.classList.remove('show'), 4000);
+}
+function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function num(v, color = true) { return `<span class="v" style="${color ? 'color:var(--' + (v>70?'ok':v>40?'warn':'bad') + ')' : ''}">${v}</span>`; }
+
+async function tick() {
+  try {
+    const st = await api('status');
+    $('#connDot').className = 'dot ' + (st.connected ? 'on' : 'off');
+    $('#ver').textContent = 'v' + st.version + ' · ' + st.mode + ' 模式' + (st.web.tokenSet ? ' · 托管令牌已注入' : '');
+    $('#runinfo').textContent = 'Bot 数量：' + st.bots.length + ' | 托管节点：' + st.selfIds.join(', ') || '（未配置，事件到达自动创建）';
+    renderBots(st.bots);
+  } catch (e) {
+    $('#connDot').className = 'dot off';
+    $('#runinfo').textContent = '无法连接后端：' + e.message;
+  }
+}
+
+function renderBots(bots) {
+  const box = $('#bots');
+  if (!bots.length) { box.innerHTML = '<div class="card"><div class="muted">暂无 Bot 节点。请在框架登录 QQ 后，或配置 self_ids 后刷新。</div></div>'; return; }
+  box.innerHTML = bots.map(b => {
+    const s = b.status || {};
+    const err = b.status?.error;
+    return `<div class="card">
+      <h3><span class="dot ${b.connected ? 'on' : 'off'}"></span> ${b.selfId} ${b.managing ? '· <span style="color:var(--ok)">托管中</span>' : ''}</h3>
+      ${err ? `<div class="muted">状态读取失败：${esc(err)}</div>` : `
+      <div class="row muted" style="font-size:12px;justify-content:space-between"><span>${esc(s.petName || '未命名')} <span class="muted">#${s.petId || '-'}</span></span><span>${s.inActivity ? `任务中 <span style="color:var(--warn)">${s.remainSec}s</span>` : '空闲'}</span></div>
+      <div class="gauge">
+        <div class="g"><span class="v" style="color:var(--warn)">${s.money ?? '-'}</span><div class="k">金币</div></div>
+        <div class="g">${num(s.mood)}<div class="k">心情</div></div>
+        <div class="g">${num(s.energy)}<div class="k">体力</div></div>
+        <div class="g">${num(s.clean)}<div class="k">清洁</div></div>
+        <div class="g"><span class="v">${s.total ?? '-'}</span><div class="k">综合值</div></div>
+        <div class="g"><span class="v">${s.storyId ? '有' : '-'}</span><div class="k">任务ID</div></div>
+      </div>`}
+    </div>`;
+  }).join('');
+}
+
+async function act(a) {
+  const selfId = $('#opSelf').value.trim();
+  try {
+    const r = await api('action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: a, selfId }) });
+    if (r.ok) msg((r.text || '操作成功') + (r.text ? '' : ''), true); else msg(r.error || '操作失败', false);
+    tick();
+  } catch (e) { msg(e.message, false); }
+}
+async function manage(on) {
+  try { const r = await api('manage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on }) }); msg(r.ok ? (on ? '已开启' : '已关闭') : '失败', r.ok); tick(); } catch (e) { msg(e.message, false); }
+}
+
+function fillCfg(c) {
+  cfg = c;
+  $('#c_prefix').value = c.command_prefix || '!';
+  $('#c_keywords').value = (c.command_keywords || []).join(',');
+  $('#c_check').value = c.check_interval || 60;
+  $('#c_self').value = (c.self_ids || []).join(',');
+  $('#c_groups').value = (c.allowed_groups || []).join(',');
+  $('#c_users').value = (c.allowed_users || []).join(',');
+  $('#c_automanage').checked = !!c.auto_manage;
+  $('#m_feed_item').value = c.manage.feed_item; $('#m_bath_item').value = c.manage.bath_item;
+  $('#m_threshold').value = c.manage.comfort_threshold; $('#m_gold').value = c.manage.gold_safe_line;
+  $('#m_priority').value = c.manage.activity_priority;
+  $('#m_autofeed').checked = c.manage.auto_feed; $('#m_autobath').checked = c.manage.auto_bath;
+  $('#m_autoreplenish').checked = c.manage.auto_replenish; $('#m_autoactivity').checked = c.manage.auto_activity;
+  $('#pk_time').value = c.pk.time; $('#pk_batch').value = c.pk.batch; $('#pk_friend').value = c.pk.friend_id;
+  $('#pk_enabled').checked = c.pk.enabled;
+  $('#fc_interval').value = c.friend_care.interval; $('#fc_threshold').value = c.friend_care.threshold;
+  $('#fc_friends').value = (c.friend_care.friends || []).join(','); $('#fc_enabled').checked = c.friend_care.enabled;
+  $('#n_groups').value = (c.notify.group_ids || []).join(','); $('#n_send').checked = c.notify.send_result;
+}
+const arr = v => v.split(/[,，]/).map(s => s.trim()).filter(Boolean);
+async function loadCfg() {
+  try { const r = await api('config'); fillCfg(r.config); msg('已载入配置'); } catch (e) { msg(e.message, false); }
+}
+async function saveCfg() {
+  const next = {
+    command_prefix: $('#c_prefix').value,
+    command_keywords: arr($('#c_keywords').value),
+    check_interval: +$('#c_check').value || 60,
+    self_ids: arr($('#c_self').value),
+    allowed_groups: arr($('#c_groups').value),
+    allowed_users: arr($('#c_users').value),
+    auto_manage: $('#c_automanage').checked,
+    manage: {
+      feed_item: $('#m_feed_item').value, bath_item: $('#m_bath_item').value,
+      comfort_threshold: +$('#m_threshold').value || 80, gold_safe_line: +$('#m_gold').value || 50,
+      activity_priority: $('#m_priority').value,
+      auto_feed: $('#m_autofeed').checked, auto_bath: $('#m_autobath').checked,
+      auto_replenish: $('#m_autoreplenish').checked, auto_activity: $('#m_autoactivity').checked,
+    },
+    pk: { time: $('#pk_time').value || '21:00', batch: +$('#pk_batch').value || 5, friend_id: $('#pk_friend').value, enabled: $('#pk_enabled').checked },
+    friend_care: { interval: +$('#fc_interval').value || 3600, threshold: +$('#fc_threshold').value || 80, friends: arr($('#fc_friends').value), enabled: $('#fc_enabled').checked },
+    notify: { group_ids: arr($('#n_groups').value), send_result: $('#n_send').checked },
+  };
+  try { const r = await api('config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ config: next }) }); fillCfg(r.config); msg('配置已保存'); } catch (e) { msg(e.message, false); }
+}
+
+async function loadLog() {
+  try {
+    const l = await api('log');
+    $('#log').textContent = (l.items || []).map(x => `[${x.time || ''}] ${x.level || ''} ${x.source || ''} ${x.text || ''}`).join('\n') || '（暂无日志）';
+    const d = await api('daily');
+    const dd = d.daily || {};
+    $('#daily').innerHTML = '<div class="row muted">' + ['feed','bath','buy','study','work','adventure','pk','visit','friend_feed'].map(k => `<span>${k}: ${dd[k] ?? 0}</span>`).join('') + '</div><div class="muted" style="margin-top:6px">数据日：' + (d.day || '-') + '</div>';
+  } catch (e) { $('#log').textContent = '读取日志失败：' + e.message; }
+}
+
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+  t.classList.add('active'); $('#p-' + t.dataset.t).classList.add('active');
+  if (t.dataset.t === 'log') loadLog();
+});
+
+loadCfg(); tick(); setInterval(tick, 5000); setInterval(loadLog, 10000);
+</script>
+</body>
+</html>
